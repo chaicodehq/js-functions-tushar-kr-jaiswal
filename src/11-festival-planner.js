@@ -49,5 +49,54 @@
  *   mgr.getUpcoming("2025-01-01", 1); // => [{ name: "Republic Day", ... }]
  */
 export function createFestivalManager() {
-  // Your code here
+    // PRIVATE STATE: This cannot be accessed directly from outside
+    let festivals = [];
+
+    const VALID_TYPES = ["religious", "national", "cultural"];
+
+    return {
+        // 1. addFestival: Validates and adds a new festival
+        addFestival(name, date, type) {
+            if (!name || typeof date !== "string" || !VALID_TYPES.includes(type)) {
+                return -1;
+            }
+
+            const exists = festivals.some((f) => f.name === name);
+            if (exists) return -1;
+
+            festivals.push({ name, date, type });
+            return festivals.length;
+        },
+
+        // 2. removeFestival: Removes by name
+        removeFestival(name) {
+            const initialLength = festivals.length;
+            festivals = festivals.filter((f) => f.name !== name);
+            return festivals.length < initialLength;
+        },
+
+        // 3. getAll: Returns a DEEP COPY to protect internal state
+        getAll() {
+            return festivals.map((f) => ({ ...f }));
+        },
+
+        // 4. getByType: Returns filtered copy
+        getByType(type) {
+            return festivals.filter((f) => f.type === type).map((f) => ({ ...f }));
+        },
+
+        // 5. getUpcoming: Returns next n festivals after/on currentDate
+        getUpcoming(currentDate, n = 3) {
+            return festivals
+                .filter((f) => f.date >= currentDate)
+                .sort((a, b) => a.date.localeCompare(b.date))
+                .slice(0, n)
+                .map((f) => ({ ...f }));
+        },
+
+        // 6. getCount: Simple length getter
+        getCount() {
+            return festivals.length;
+        },
+    };
 }

@@ -49,5 +49,66 @@
  *   // => { name: "Ram", area: "Dadar", total: 2, completed: 1, pending: 1, successRate: "50.00%" }
  */
 export function createDabbawala(name, area) {
-  // Your code here
+    let deliveries = [];
+    let nextId = 0;
+
+    function addDelivery(from, to) {
+        if (
+            typeof from !== "string" ||
+            typeof to !== "string" ||
+            from.trim() === "" ||
+            to.trim() === ""
+        )
+            return -1;
+        nextId++;
+        deliveries.push({ id: nextId, from, to, status: "pending" });
+        return nextId;
+    }
+
+    function completeDelivery(id) {
+        if (isNaN(Number(id)) || id <= 0) return false;
+
+        let isValidDelivery = deliveries.find((obj) => obj?.id === id);
+
+        if (!isValidDelivery || isValidDelivery.status === "completed") return false;
+        else if (isValidDelivery.status === "pending") {
+            isValidDelivery.status = "completed";
+            return true;
+        }
+    }
+
+    function getActiveDeliveries() {
+        if (deliveries.length === 0) return [];
+        const newArr = deliveries.filter((obj) => obj.status === "pending");
+        return newArr;
+    }
+
+    function getStats() {
+        let total = deliveries.length;
+        let completed = 0;
+        let pending = 0;
+
+        deliveries.forEach((obj) => {
+            if (obj.status === "completed") completed++;
+            else if (obj.status === "pending") pending++;
+        });
+
+        let successRate = total === 0 ? "0.00%" : ((completed / total) * 100).toFixed(2) + "%";
+
+        return { name, area, total, completed, pending, successRate };
+    }
+
+    function reset() {
+        deliveries = [];
+        nextId = 0;
+        return true;
+    }
+
+    return {
+        addDelivery,
+        completeDelivery,
+        getActiveDeliveries,
+        getStats,
+        reset,
+    };
 }

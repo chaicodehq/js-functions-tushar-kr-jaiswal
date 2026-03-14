@@ -63,18 +63,111 @@
  *   election.castVote("V1", "C1", r => "voted!", e => "error: " + e);
  *   // => "voted!"
  */
+
+/**
+ * 🗳️ Panchayat Election System - Capstone Solution
+ */
+
+// 1. createElection: The central hub using Closures and Callbacks
 export function createElection(candidates) {
-  // Your code here
+    // PRIVATE STATE
+    const registeredVoters = new Map(); // Store voter objects by ID
+    const votedIds = new Set(); // Track who has already voted
+    let votesTally = {}; // { candidateId: count }
+
+    // Initialize tally for all candidates
+    candidates.forEach((c) => {
+        votesTally[c.id] = 0;
+    });
+
+    return {
+        registerVoter(voter) {
+            if (!voter || !voter.id || voter.age < 18) return false;
+            if (registeredVoters.has(voter.id)) return false;
+
+            registeredVoters.set(voter.id, voter);
+            return true;
+        },
+
+        castVote(voterId, candidateId, onSuccess, onError) {
+            // Validation Logic
+            if (!registeredVoters.has(voterId)) return onError("Voter not registered");
+            if (votedIds.has(voterId)) return onError("Already voted");
+            if (!candidates.find((c) => c.id === candidateId)) return onError("Invalid candidate");
+
+            // Record Vote using our Pure Function logic (conceptually)
+            votesTally = tallyPure(votesTally, candidateId);
+            votedIds.add(voterId);
+
+            return onSuccess({ voterId, candidateId });
+        },
+
+        getResults(sortFn) {
+            const results = candidates.map((c) => ({
+                ...c,
+                votes: votesTally[c.id] || 0,
+            }));
+
+            if (typeof sortFn === "function") {
+                return results.sort(sortFn);
+            }
+
+            // Default: Sort by votes descending
+            return results.sort((a, b) => b.votes - a.votes);
+        },
+
+        getWinner() {
+            const results = this.getResults();
+            if (results.length === 0 || results.every((r) => r.votes === 0)) {
+                return null;
+            }
+            // Since results are sorted descending by default, index 0 is the winner
+            return results[0];
+        },
+    };
 }
 
+// 2. createVoteValidator: FACTORY pattern
 export function createVoteValidator(rules) {
-  // Your code here
+    return function (voter) {
+        const { minAge, requiredFields } = rules;
+
+        for (let field of requiredFields) {
+            if (voter[field] === undefined || voter[field] === null || voter[field] === "") {
+                return { valid: false, reason: `Missing field: ${field}` };
+            }
+        }
+
+        if (voter.age < minAge) {
+            return { valid: false, reason: "Underage" };
+        }
+
+        return { valid: true, reason: "Valid voter" };
+    };
 }
 
+// 3. countVotesInRegions: RECURSION
 export function countVotesInRegions(regionTree) {
-  // Your code here
+    if (!regionTree || typeof regionTree.votes !== "number") return 0;
+
+    let total = regionTree.votes;
+
+    if (Array.isArray(regionTree.subRegions)) {
+        total += regionTree.subRegions.reduce((sum, sub) => {
+            return sum + countVotesInRegions(sub);
+        }, 0);
+    }
+
+    return total;
 }
 
+// 4. tallyPure: PURE FUNCTION (No Side Effects)
 export function tallyPure(currentTally, candidateId) {
-  // Your code here
+    // Create a shallow copy to maintain immutability
+    const newTally = { ...currentTally };
+
+    // Increment or initialize
+    newTally[candidateId] = (newTally[candidateId] || 0) + 1;
+
+    return newTally;
 }

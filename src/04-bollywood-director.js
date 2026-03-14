@@ -45,13 +45,59 @@
  *   pricer("gold", true)  // => 200 * 1.5 * 1.3 = 390
  */
 export function createDialogueWriter(genre) {
-  // Your code here
+    if (typeof genre !== "string" || genre.trim() === "") return null;
+    const templates = {
+        action: (hero, villain) => `${hero} says: 'Tujhe toh main dekh lunga, ${villain}!'`,
+        romance: (hero, villain) => `${hero} whispers: '${villain}, tum mere liye sab kuch ho'`,
+        comedy: (hero, villain) => `${hero} laughs: '${villain} bhai, kya kar rahe ho yaar!'`,
+        drama: (hero, villain) => `${hero} cries: '${villain}, tune mera sab kuch cheen liya!'`,
+    };
+
+    if (!["action", "romance", "comedy", "drama"].includes(genre)) return null;
+
+    return function (hero, villain) {
+        if (!hero || !villain) return "...";
+        else return templates[genre](hero, villain);
+    };
 }
 
 export function createTicketPricer(basePrice) {
-  // Your code here
+    if (basePrice <= 0) return null;
+
+    return function (seatType, isWeekend = false) {
+        if (seatType === "silver") {
+            return isWeekend === true ? Math.round(basePrice * 1 * 1.3) : Math.round(basePrice * 1);
+        }
+
+        switch (seatType) {
+            case "silver":
+                return isWeekend === true
+                    ? Math.round(basePrice * 1 * 1.3)
+                    : Math.round(basePrice * 1);
+            case "gold":
+                return isWeekend === true
+                    ? Math.round(basePrice * 1.5 * 1.3)
+                    : Math.round(basePrice * 1.5);
+            case "platinum":
+                return isWeekend === true
+                    ? Math.round(basePrice * 2 * 1.3)
+                    : Math.round(basePrice * 2);
+
+            default:
+                return null;
+        }
+    };
 }
 
 export function createRatingCalculator(weights) {
-  // Your code here
+    if (typeof weights !== "object" || weights === null || Object.keys(weights).length === 0)
+        return null;
+    return function (score) {
+        let weightedAvg = 0;
+        for (const key in score) {
+            if (!weights[key]) continue;
+            weightedAvg += score[key] * weights[key];
+        }
+        return Math.round(weightedAvg * 10) / 10;
+    };
 }
